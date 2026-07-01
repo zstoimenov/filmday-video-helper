@@ -34,6 +34,10 @@ export function exportSessionCSV(session) {
       'anchors',
       'locked_segments',
       'free_segments',
+      'location',
+      'estimated_runtime',
+      'tone',
+      'broll',
       'take_number',
       'take_timestamp_ms',
     ],
@@ -47,6 +51,10 @@ export function exportSessionCSV(session) {
       (card.anchors || []).join('; '),
       (card.lockedSegments || []).join(' | '),
       (card.freeSegments || []).join(' | '),
+      (card.locationNotes || []).join(' | '),
+      card.estimatedRuntime || '',
+      (card.toneNotes || []).join(' | '),
+      (card.brollNotes || []).join(' | '),
     ];
     if (!card.takes || !card.takes.length) {
       rows.push([...base, '', '']);
