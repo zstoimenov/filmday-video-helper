@@ -175,7 +175,6 @@ function makeNoteLine(icon, text) {
 function renderFilming() {
   showView('filming');
   renderCurrentCard();
-  setupSwipe();
 }
 
 function renderCurrentCard() {
@@ -223,10 +222,10 @@ function renderCurrentCard() {
     notesEl.appendChild(makeNoteLine('📷', b));
   });
 
+  renderLockFreeIndicator(card);
   renderTakeLog(card);
   updateTakeButton(card);
 
-  document.getElementById('btn-next-card').hidden = isLast;
   document.getElementById('btn-end-session').hidden = !isLast;
 
   // Re-derive the timer baseline from this card's last take every time it's shown,
@@ -238,16 +237,42 @@ function renderCurrentCard() {
 function renderCardNav() {
   const nav = document.getElementById('card-nav');
   nav.innerHTML = '';
+  let currentPill = null;
   currentSession.cards.forEach((card, i) => {
     const pill = document.createElement('button');
     pill.type = 'button';
     pill.className = 'card-nav-pill';
-    if (i === currentCardIndex) pill.classList.add('current');
+    if (i === currentCardIndex) {
+      pill.classList.add('current');
+      currentPill = pill;
+    }
     if (card.takes.length) pill.classList.add('has-takes');
     pill.textContent = i + 1;
     pill.addEventListener('click', () => jumpToCard(i));
     nav.appendChild(pill);
   });
+  // Keep the active page number in view as the current card changes, so it
+  // never scrolls off the edge of the horizontally-scrolling strip.
+  if (currentPill) {
+    currentPill.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+  }
+}
+
+function renderLockFreeIndicator(card) {
+  const el = document.getElementById('card-lockfree');
+  el.innerHTML = '';
+  if ((card.lockedSegments || []).length) {
+    const chip = document.createElement('span');
+    chip.className = 'lf-chip lf-locked';
+    chip.textContent = '🔒 LOCKED';
+    el.appendChild(chip);
+  }
+  if ((card.freeSegments || []).length) {
+    const chip = document.createElement('span');
+    chip.className = 'lf-chip lf-free';
+    chip.textContent = '🔓 FREE';
+    el.appendChild(chip);
+  }
 }
 
 function jumpToCard(i) {
@@ -268,8 +293,9 @@ function renderTakeLog(card) {
 }
 
 function updateTakeButton(card) {
-  const label = card.takes.length ? `Take ${card.takes.length + 1}` : 'Start';
-  document.getElementById('btn-take-mini').textContent = label;
+  const btn = document.getElementById('btn-take-mini');
+  btn.textContent = card.takes.length ? `Take ${card.takes.length + 1}` : 'Start';
+  btn.classList.toggle('recording', card.takes.length > 0);
 }
 
 async function handleTake() {
@@ -289,13 +315,13 @@ async function handleTake() {
 
 document.getElementById('btn-take-mini').addEventListener('click', handleTake);
 
-document.getElementById('btn-next-card').addEventListener('click', async () => {
+async function goToNextCard() {
   if (currentCardIndex < currentSession.cards.length - 1) {
     currentCardIndex += 1;
     renderCurrentCard();
     await saveSession(currentSession);
   }
-});
+}
 
 document.getElementById('btn-end-session').addEventListener('click', async () => {
   currentSession.status = 'complete';
@@ -314,29 +340,118 @@ document.getElementById('btn-resume-session').addEventListener('click', () => {
   resumeAtCard(currentSession.cards.length - 1);
 });
 
-function setupSwipe() {
+// Gestures on the card content: swipe left/right to change cards (primary
+// navigation), long-press to start/log a take, double-tap to log a take
+// once already recording. Bound once at startup - currentSession/
+// currentCardIndex are read live via closures, so a single long-lived
+// listener set stays correct across every session opened afterwards.
+function setupGestures() {
   const el = document.getElementById('filming-card');
+
+  const LONG_PRESS_MS = 550;
+  const TAP_MAX_MS = 300;
+  const DOUBLE_TAP_MAX_MS = 350;
+  const MOVE_THRESHOLD = 12;
+  const SWIPE_MIN_DX = 60;
+  const SWIPE_MAX_DY = 60;
+
   let startX = null;
   let startY = null;
+  let startTime = 0;
+  let moved = false;
+  let longPressTimer = null;
+  let longPressFired = false;
+  let lastTapTime = 0;
+  let lastTapX = null;
+  let lastTapY = null;
 
-  el.ontouchstart = (e) => {
-    startX = e.touches[0].clientX;
-    startY = e.touches[0].clientY;
-  };
-  el.ontouchend = (e) => {
-    if (startX === null) return;
-    const dx = e.changedTouches[0].clientX - startX;
-    const dy = e.changedTouches[0].clientY - startY;
-    startX = null;
-    startY = null;
-    if (Math.abs(dx) < 60 || Math.abs(dy) > 60) return;
-    const cards = currentSession.cards;
-    if (dx < 0 && currentCardIndex < cards.length - 1) {
-      document.getElementById('btn-next-card').click();
-    } else if (dx > 0 && currentCardIndex > 0) {
-      jumpToCard(currentCardIndex - 1);
+  const clearLongPress = () => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      longPressTimer = null;
     }
   };
+
+  el.addEventListener(
+    'touchstart',
+    (e) => {
+      if (e.touches.length !== 1 || !currentSession) return;
+      const t = e.touches[0];
+      startX = t.clientX;
+      startY = t.clientY;
+      startTime = Date.now();
+      moved = false;
+      longPressFired = false;
+      clearLongPress();
+      longPressTimer = setTimeout(() => {
+        longPressFired = true;
+        handleTake();
+      }, LONG_PRESS_MS);
+    },
+    { passive: true }
+  );
+
+  el.addEventListener(
+    'touchmove',
+    (e) => {
+      if (startX === null) return;
+      const t = e.touches[0];
+      if (Math.abs(t.clientX - startX) > MOVE_THRESHOLD || Math.abs(t.clientY - startY) > MOVE_THRESHOLD) {
+        moved = true;
+        clearLongPress();
+      }
+    },
+    { passive: true }
+  );
+
+  el.addEventListener(
+    'touchend',
+    (e) => {
+      clearLongPress();
+      if (startX === null) return;
+      const t = e.changedTouches[0];
+      const dx = t.clientX - startX;
+      const dy = t.clientY - startY;
+      const duration = Date.now() - startTime;
+      const wasLongPress = longPressFired;
+      startX = null;
+      startY = null;
+      longPressFired = false;
+
+      if (wasLongPress) return;
+
+      if (!moved && duration < TAP_MAX_MS) {
+        const now = Date.now();
+        const isDoubleTap =
+          lastTapTime &&
+          now - lastTapTime < DOUBLE_TAP_MAX_MS &&
+          lastTapX !== null &&
+          Math.abs(t.clientX - lastTapX) < MOVE_THRESHOLD * 2 &&
+          Math.abs(t.clientY - lastTapY) < MOVE_THRESHOLD * 2;
+
+        if (isDoubleTap) {
+          lastTapTime = 0;
+          const card = currentSession.cards[currentCardIndex];
+          if (card.takes.length) handleTake();
+        } else {
+          lastTapTime = now;
+          lastTapX = t.clientX;
+          lastTapY = t.clientY;
+        }
+        return;
+      }
+
+      if (moved && Math.abs(dx) >= SWIPE_MIN_DX && Math.abs(dy) <= SWIPE_MAX_DY) {
+        const cards = currentSession.cards;
+        if (dx < 0 && currentCardIndex < cards.length - 1) {
+          goToNextCard();
+        } else if (dx > 0 && currentCardIndex > 0) {
+          jumpToCard(currentCardIndex - 1);
+        }
+      }
+    },
+    { passive: true }
+  );
 }
 
 // ---------- SUMMARY ----------
@@ -403,4 +518,5 @@ function renderSummary(session) {
 
 // ---------- INIT ----------
 
+setupGestures();
 renderHome();

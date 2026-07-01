@@ -63,20 +63,6 @@ html, body {
   font-weight: 400;
 }
 
-.filming-header { justify-content: space-between; }
-
-.btn-take-mini {
-  background: var(--orange);
-  border: 1px solid var(--orange);
-  color: #140a00;
-  font-weight: 800;
-  font-size: 0.9rem;
-  padding: 8px 16px;
-  border-radius: 999px;
-  cursor: pointer;
-}
-.btn-take-mini:active { transform: scale(0.96); background: #e37300; }
-
 .progress-row {
   display: flex;
   align-items: center;
@@ -105,20 +91,13 @@ html, body {
   white-space: nowrap;
 }
 
-.nav-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex: none;
-}
-
 .card-nav {
   display: flex;
   gap: 6px;
   overflow-x: auto;
   padding: 2px 0;
-  flex: 1;
-  min-width: 0;
+  flex: none;
+  scroll-behavior: smooth;
 }
 
 .card-nav-pill {
@@ -143,23 +122,6 @@ html, body {
   border-color: var(--orange);
   color: #140a00;
 }
-
-/* Deliberately styled far from .btn-take-mini (muted, not orange, and a
-   whole row below it) so it's easy to tell apart from the take button and
-   hard to hit by accident while reaching for it. */
-.btn-next-mini {
-  flex: none;
-  background: var(--bg-raised);
-  border: 1px solid var(--border);
-  color: var(--text-muted);
-  font-weight: 700;
-  font-size: 0.8rem;
-  padding: 8px 14px;
-  border-radius: 999px;
-  cursor: pointer;
-}
-.btn-next-mini:active { background: var(--border); }
-.btn-next-mini[hidden] { display: none; }
 
 /* Buttons */
 .btn {
@@ -194,12 +156,6 @@ html, body {
   background: var(--bg-raised);
   border-color: var(--border);
   color: var(--text);
-}
-
-.btn-danger {
-  background: var(--danger);
-  border-color: var(--danger);
-  color: #1a0000;
 }
 
 /* Home / session list */
@@ -274,7 +230,10 @@ html, body {
   line-height: 1.5;
 }
 
-/* Filming card */
+/* Filming card - view only: script text can be scrolled but not selected,
+   copied, or edited. Horizontal swipes are handled in JS (touch-action:
+   pan-y leaves vertical scrolling native and stops the browser from
+   fighting our own gesture handling on the horizontal axis). */
 .filming-card {
   background: var(--bg-card);
   border: 1px solid var(--border);
@@ -286,6 +245,10 @@ html, body {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .card-title-row {
@@ -434,10 +397,72 @@ html, body {
   font-variant-numeric: tabular-nums;
 }
 
-.filming-controls {
+/* Bottom bar: fixed at the foot of the screen for one-handed thumb reach
+   on larger phones. Exit / lock-free status / take+end all live here. */
+.filming-bottom-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
   flex: none;
 }
-.filming-controls:has(> [hidden]:only-child) { display: none; }
+
+.lockfree-indicator {
+  display: flex;
+  gap: 6px;
+  flex: 1;
+  justify-content: center;
+  min-width: 0;
+}
+
+.lf-chip {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  border-radius: 999px;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  white-space: nowrap;
+}
+.lf-chip.lf-locked { color: #fff; border-color: #fff; }
+.lf-chip.lf-free { color: var(--text-muted); }
+
+.bottom-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+}
+
+.btn-take-mini {
+  background: var(--orange);
+  border: 1px solid var(--orange);
+  color: #140a00;
+  font-weight: 800;
+  font-size: 0.9rem;
+  padding: 10px 18px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.btn-take-mini:active { transform: scale(0.96); background: #e37300; }
+.btn-take-mini.recording {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: #fff;
+}
+.btn-take-mini.recording:active { background: #b83838; }
+
+.btn-end-mini {
+  background: var(--danger);
+  border: 1px solid var(--danger);
+  color: #fff;
+  font-weight: 800;
+  font-size: 0.85rem;
+  padding: 10px 16px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.btn-end-mini[hidden] { display: none; }
 
 /* Summary */
 .summary-totals {

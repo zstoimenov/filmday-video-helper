@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
 <title>E2A Filming Prompter</title>
 <meta name="theme-color" content="#0a0a0a" />
 <meta name="description" content="Teleprompter and take-tracker for E2A filming sessions." />
@@ -39,20 +39,12 @@
 
   <!-- FILMING VIEW -->
   <section id="view-filming" class="view" data-view="filming" hidden>
-    <header class="app-header filming-header">
-      <button class="btn btn-ghost" data-nav="home">&larr; Exit</button>
-      <button id="btn-take-mini" class="btn-take-mini">Start</button>
-    </header>
-
     <div class="progress-row">
       <div class="progress-bar-track"><div id="progress-bar-fill" class="progress-bar-fill"></div></div>
       <span id="card-progress" class="card-progress"></span>
     </div>
 
-    <div class="nav-row">
-      <div id="card-nav" class="card-nav"></div>
-      <button id="btn-next-card" class="btn-next-mini">Next &rarr;</button>
-    </div>
+    <div id="card-nav" class="card-nav"></div>
 
     <div id="filming-card" class="filming-card">
       <div class="card-title-row">
@@ -71,8 +63,13 @@
 
     <div id="take-log" class="take-log"></div>
 
-    <div class="filming-controls">
-      <button id="btn-end-session" class="btn btn-danger" hidden>End Session</button>
+    <div class="filming-bottom-bar">
+      <button class="btn btn-ghost" data-nav="home">&larr; Exit</button>
+      <div id="card-lockfree" class="lockfree-indicator"></div>
+      <div class="bottom-actions">
+        <button id="btn-take-mini" class="btn-take-mini">Start</button>
+        <button id="btn-end-session" class="btn-end-mini" hidden>End</button>
+      </div>
     </div>
   </section>
 
