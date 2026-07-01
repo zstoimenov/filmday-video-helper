@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>E2A Filming Prompter</title>
+<meta name="theme-color" content="#0a0a0a" />
+<meta name="description" content="Teleprompter and take-tracker for E2A filming sessions." />
+<link rel="manifest" href="manifest.json" />
+<link rel="icon" href="icons/icon-192.png" />
+<link rel="apple-touch-icon" href="icons/icon-192.png" />
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+<div id="app">
+
+  <!-- HOME: session list -->
+  <section id="view-home" class="view" data-view="home">
+    <header class="app-header">
+      <h1>E2A Filming Prompter</h1>
+      <button id="btn-new-session" class="btn btn-primary">+ New Session</button>
+    </header>
+    <div id="session-list" class="session-list"></div>
+    <p id="empty-state" class="empty-state" hidden>No sessions yet. Start one to begin filming.</p>
+  </section>
+
+  <!-- NEW SESSION: paste script -->
+  <section id="view-new" class="view" data-view="new" hidden>
+    <header class="app-header">
+      <button class="btn btn-ghost" data-nav="home">&larr; Back</button>
+      <h1>New Session</h1>
+    </header>
+    <label class="field-label" for="session-title">Session title</label>
+    <input id="session-title" type="text" placeholder="e.g. Ep 12 - Bank Setup" />
+    <label class="field-label" for="script-input">Paste script</label>
+    <textarea id="script-input" placeholder="CARD: Opening hook&#10;🔒 This is the locked line.&#10;IDEA: One sentence to riff from.&#10;ANCHORS: word1, word2&#10;🔓 Free delivery notes..."></textarea>
+    <button id="btn-parse" class="btn btn-primary btn-large">Parse &amp; Start Filming</button>
+  </section>
+
+  <!-- FILMING VIEW -->
+  <section id="view-filming" class="view" data-view="filming" hidden>
+    <header class="app-header filming-header">
+      <button class="btn btn-ghost" data-nav="home">&larr; Exit</button>
+      <span id="card-progress" class="card-progress"></span>
+    </header>
+
+    <div id="filming-card" class="filming-card">
+      <h2 id="card-title" class="card-title"></h2>
+      <div id="card-locked" class="card-segment card-locked"></div>
+      <div id="card-idea" class="card-segment card-idea"></div>
+      <div id="card-anchors" class="card-anchors"></div>
+      <div id="card-free" class="card-segment card-free"></div>
+    </div>
+
+    <div id="take-log" class="take-log"></div>
+
+    <div class="filming-controls">
+      <button id="btn-take" class="btn btn-take">Start</button>
+      <button id="btn-next-card" class="btn btn-secondary">Next Card &rarr;</button>
+      <button id="btn-end-session" class="btn btn-danger" hidden>End Session</button>
+    </div>
+  </section>
+
+  <!-- SUMMARY / DASHBOARD -->
+  <section id="view-summary" class="view" data-view="summary" hidden>
+    <header class="app-header">
+      <button class="btn btn-ghost" data-nav="home">&larr; Back</button>
+      <h1 id="summary-title">Session Summary</h1>
+    </header>
+
+    <div class="summary-totals" id="summary-totals"></div>
+
+    <h3 class="section-heading">Flagged Cards</h3>
+    <div id="summary-flagged" class="summary-flagged"></div>
+
+    <h3 class="section-heading">Locked vs Free</h3>
+    <div id="summary-lockedfree" class="summary-lockedfree"></div>
+
+    <h3 class="section-heading">Per-Card Breakdown</h3>
+    <div id="summary-cards" class="summary-cards"></div>
+
+    <div class="export-row">
+      <button id="btn-export-json" class="btn btn-secondary">Export JSON</button>
+      <button id="btn-export-csv" class="btn btn-secondary">Export CSV</button>
+    </div>
+  </section>
+
+</div>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
