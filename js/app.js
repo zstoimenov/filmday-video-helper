@@ -5,8 +5,24 @@ import { exportSessionJSON, exportSessionCSV } from './export.js';
 import { APP_VERSION } from './version.js';
 
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js').catch(() => {});
+  window.addEventListener('load', async () => {
+    const reg = await navigator.serviceWorker.register('sw.js').catch(() => null);
+    if (!reg) return;
+    // Force a fresh update check now and whenever the app regains focus, instead
+    // of waiting on the browser's own throttled background check.
+    reg.update().catch(() => {});
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') reg.update().catch(() => {});
+    });
+  });
+
+  // skipWaiting + clients.claim in sw.js mean a new worker takes control as soon
+  // as it's installed; reload immediately so the new version is actually used.
+  let refreshing = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (refreshing) return;
+    refreshing = true;
+    window.location.reload();
   });
 }
 
@@ -156,7 +172,9 @@ function renderCurrentCard() {
   const card = cards[currentCardIndex];
   const isLast = currentCardIndex === cards.length - 1;
 
-  document.getElementById('card-progress').textContent = `Card ${currentCardIndex + 1} / ${cards.length}`;
+  document.getElementById('card-progress').textContent = `${currentCardIndex + 1} / ${cards.length}`;
+  document.getElementById('progress-bar-fill').style.width = `${((currentCardIndex + 1) / cards.length) * 100}%`;
+  renderCardNav();
   document.getElementById('card-title').textContent = card.title;
 
   document.getElementById('card-locked').innerHTML = (card.lockedSegments || [])
@@ -184,8 +202,31 @@ function renderCurrentCard() {
   document.getElementById('btn-next-card').hidden = isLast;
   document.getElementById('btn-end-session').hidden = !isLast;
 
-  // Resume timer reference if this card already has takes (e.g. after navigating back).
-  cardStartTime = card.takes.length ? cardStartTime : null;
+  // Re-derive the timer baseline from this card's last take every time it's shown,
+  // so jumping between cards (nav strip, swipe, revisiting) never produces a
+  // negative or inflated gap for the next take logged on it.
+  cardStartTime = card.takes.length ? Date.now() - card.takes[card.takes.length - 1].timestamp : null;
+}
+
+function renderCardNav() {
+  const nav = document.getElementById('card-nav');
+  nav.innerHTML = '';
+  currentSession.cards.forEach((card, i) => {
+    const pill = document.createElement('button');
+    pill.type = 'button';
+    pill.className = 'card-nav-pill';
+    if (i === currentCardIndex) pill.classList.add('current');
+    if (card.takes.length) pill.classList.add('has-takes');
+    pill.textContent = i + 1;
+    pill.addEventListener('click', () => jumpToCard(i));
+    nav.appendChild(pill);
+  });
+}
+
+function jumpToCard(i) {
+  if (i === currentCardIndex) return;
+  currentCardIndex = i;
+  renderCurrentCard();
 }
 
 function renderTakeLog(card) {
@@ -200,11 +241,12 @@ function renderTakeLog(card) {
 }
 
 function updateTakeButton(card) {
-  const btn = document.getElementById('btn-take');
-  btn.textContent = card.takes.length ? `Take ${card.takes.length + 1}` : 'Start';
+  const label = card.takes.length ? `Take ${card.takes.length + 1}` : 'Start';
+  document.getElementById('btn-take').textContent = label;
+  document.getElementById('btn-take-mini').textContent = label;
 }
 
-document.getElementById('btn-take').addEventListener('click', async () => {
+async function handleTake() {
   const card = currentSession.cards[currentCardIndex];
   if (!card.takes.length) {
     cardStartTime = Date.now();
@@ -215,13 +257,16 @@ document.getElementById('btn-take').addEventListener('click', async () => {
   }
   renderTakeLog(card);
   updateTakeButton(card);
+  renderCardNav();
   await saveSession(currentSession);
-});
+}
+
+document.getElementById('btn-take').addEventListener('click', handleTake);
+document.getElementById('btn-take-mini').addEventListener('click', handleTake);
 
 document.getElementById('btn-next-card').addEventListener('click', async () => {
   if (currentCardIndex < currentSession.cards.length - 1) {
     currentCardIndex += 1;
-    cardStartTime = null;
     renderCurrentCard();
     await saveSession(currentSession);
   }
@@ -231,6 +276,17 @@ document.getElementById('btn-end-session').addEventListener('click', async () =>
   currentSession.status = 'complete';
   await saveSession(currentSession);
   navigate('summary', currentSession);
+});
+
+async function resumeAtCard(index) {
+  currentSession.status = 'in-progress';
+  await saveSession(currentSession);
+  currentCardIndex = index;
+  navigate('filming');
+}
+
+document.getElementById('btn-resume-session').addEventListener('click', () => {
+  resumeAtCard(currentSession.cards.length - 1);
 });
 
 function setupSwipe() {
@@ -253,9 +309,7 @@ function setupSwipe() {
     if (dx < 0 && currentCardIndex < cards.length - 1) {
       document.getElementById('btn-next-card').click();
     } else if (dx > 0 && currentCardIndex > 0) {
-      currentCardIndex -= 1;
-      cardStartTime = null;
-      renderCurrentCard();
+      jumpToCard(currentCardIndex - 1);
     }
   };
 }
@@ -307,13 +361,14 @@ function renderSummary(session) {
 
   const cardsEl = document.getElementById('summary-cards');
   cardsEl.innerHTML = '';
-  stats.perCard.forEach((c) => {
+  stats.perCard.forEach((c, i) => {
     const row = document.createElement('div');
     row.className = 'summary-card-row';
     row.innerHTML = `
       <span class="sc-title">${escapeHtml(c.title)}</span>
       <span class="sc-meta">${c.takeCount} takes &middot; total ${formatMs(c.totalTime)} &middot; avg ${formatMs(c.avgTimePerTake)}/take</span>
     `;
+    row.addEventListener('click', () => resumeAtCard(i));
     cardsEl.appendChild(row);
   });
 
