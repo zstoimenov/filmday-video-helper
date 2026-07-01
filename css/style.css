@@ -26,14 +26,20 @@ html, body {
 #app {
   max-width: 760px;
   margin: 0 auto;
-  min-height: 100vh;
+  height: 100vh;
+  height: 100dvh;
   padding: env(safe-area-inset-top, 16px) 16px calc(env(safe-area-inset-bottom, 16px) + 16px);
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
-.view { display: flex; flex-direction: column; gap: 16px; flex: 1; }
+.view { display: flex; flex-direction: column; gap: 16px; flex: 1; min-height: 0; overflow-y: auto; }
 .view[hidden] { display: none; }
+
+/* Filming view keeps header/progress/nav/controls fixed on screen; only the
+   card text itself scrolls, so the take button never needs a scroll to reach. */
+#view-filming { overflow: hidden; }
 
 .app-header {
   display: flex;
@@ -58,10 +64,75 @@ html, body {
 
 .filming-header { justify-content: space-between; }
 
+.btn-take-mini {
+  background: var(--orange);
+  border: 1px solid var(--orange);
+  color: #140a00;
+  font-weight: 800;
+  font-size: 0.9rem;
+  padding: 8px 16px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.btn-take-mini:active { transform: scale(0.96); background: #e37300; }
+
+.progress-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: none;
+}
+
+.progress-bar-track {
+  flex: 1;
+  height: 6px;
+  background: var(--bg-raised);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: var(--orange);
+  transition: width 0.2s ease;
+}
+
 .card-progress {
   color: var(--text-muted);
   font-variant-numeric: tabular-nums;
-  font-size: 0.95rem;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.card-nav {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 2px 0;
+  flex: none;
+}
+
+.card-nav-pill {
+  flex: none;
+  min-width: 34px;
+  height: 34px;
+  padding: 0 4px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-raised);
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.card-nav-pill.has-takes { border-width: 2px; border-color: var(--orange); color: var(--orange); }
+.card-nav-pill.current {
+  background: var(--orange);
+  border-color: var(--orange);
+  color: #140a00;
 }
 
 /* Buttons */
@@ -187,6 +258,7 @@ html, body {
   flex-direction: column;
   gap: 16px;
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
 }
 
@@ -204,17 +276,19 @@ html, body {
 
 .card-locked {
   color: #fff;
-  font-weight: 700;
+  font-weight: 800;
+  font-size: 2rem;
+  line-height: 1.35;
 }
 .card-locked:not(:empty)::before {
   content: '🔒 LOCKED';
   display: block;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   color: #fff;
   opacity: 0.85;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
 .card-free {
@@ -269,6 +343,7 @@ html, body {
   gap: 8px;
   overflow-x: auto;
   padding: 2px 0;
+  flex: none;
 }
 .take-chip {
   flex: none;
@@ -285,6 +360,7 @@ html, body {
   display: grid;
   grid-template-columns: 1fr;
   gap: 10px;
+  flex: none;
 }
 
 .btn-take {
@@ -339,7 +415,9 @@ html, body {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  cursor: pointer;
 }
+.summary-card-row:active { background: var(--bg-raised); }
 .summary-card-row .sc-title { font-weight: 600; }
 .summary-card-row .sc-meta { color: var(--text-muted); font-size: 0.82rem; }
 
@@ -348,6 +426,7 @@ html, body {
 
 @media (min-width: 600px) {
   .card-segment { font-size: 1.8rem; }
+  .card-locked { font-size: 2.3rem; }
   .btn-take { font-size: 1.6rem; }
   .filming-controls { grid-template-columns: 2fr 1fr; }
 }

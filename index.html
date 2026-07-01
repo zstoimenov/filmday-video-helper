@@ -41,8 +41,15 @@
   <section id="view-filming" class="view" data-view="filming" hidden>
     <header class="app-header filming-header">
       <button class="btn btn-ghost" data-nav="home">&larr; Exit</button>
-      <span id="card-progress" class="card-progress"></span>
+      <button id="btn-take-mini" class="btn-take-mini">Start</button>
     </header>
+
+    <div class="progress-row">
+      <div class="progress-bar-track"><div id="progress-bar-fill" class="progress-bar-fill"></div></div>
+      <span id="card-progress" class="card-progress"></span>
+    </div>
+
+    <div id="card-nav" class="card-nav"></div>
 
     <div id="filming-card" class="filming-card">
       <h2 id="card-title" class="card-title"></h2>
@@ -67,6 +74,8 @@
       <button class="btn btn-ghost" data-nav="home">&larr; Back</button>
       <h1 id="summary-title">Session Summary</h1>
     </header>
+
+    <button id="btn-resume-session" class="btn btn-secondary btn-large">&#8635; Back to Cards</button>
 
     <div class="summary-totals" id="summary-totals"></div>
 
