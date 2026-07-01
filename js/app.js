@@ -1,4 +1,4 @@
-import { saveSession, getSession, getAllSessions, genId } from './db.js';
+import { saveSession, getSession, getAllSessions, deleteSession, genId } from './db.js';
 import { buildCards } from './parser.js';
 import { computeSessionStats, formatMs } from './analytics.js';
 import { exportSessionJSON, exportSessionCSV } from './export.js';
@@ -51,7 +51,10 @@ async function renderHome() {
     const el = document.createElement('div');
     el.className = 'session-item';
     el.innerHTML = `
-      <span class="s-status">${session.status === 'complete' ? 'Complete' : 'In progress'}</span>
+      <div class="session-item-row">
+        <span class="s-status">${session.status === 'complete' ? 'Complete' : 'In progress'}</span>
+        <button class="btn-delete" type="button" aria-label="Delete session">&times;</button>
+      </div>
       <span class="s-title">${escapeHtml(session.title)}</span>
       <span class="s-meta">
         <span>${new Date(session.createdAt).toLocaleDateString()}</span>
@@ -60,8 +63,19 @@ async function renderHome() {
       </span>
     `;
     el.addEventListener('click', () => openSession(session.id));
+    el.querySelector('.btn-delete').addEventListener('click', (e) => {
+      e.stopPropagation();
+      handleDeleteSession(session.id, session.title);
+    });
     list.appendChild(el);
   }
+}
+
+async function handleDeleteSession(id, title) {
+  const confirmed = window.confirm(`Delete "${title}"? This cannot be undone.`);
+  if (!confirmed) return;
+  await deleteSession(id);
+  renderHome();
 }
 
 async function openSession(id) {
