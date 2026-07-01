@@ -144,11 +144,24 @@ document.getElementById('btn-parse').addEventListener('click', async () => {
   navigate('filming');
 
   const unrecognizedCount = cards.filter((c) => c.sectionRecognized === false).length;
-  if (unrecognizedCount > 0) {
-    document.getElementById('section-warning-text').textContent =
-      unrecognizedCount === 1
-        ? '1 card has an unrecognised section label.'
-        : `${unrecognizedCount} cards have unrecognised section labels.`;
+  const formatWarningCount = cards.filter((c) => c.formatWarning).length;
+  if (unrecognizedCount > 0 || formatWarningCount > 0) {
+    const parts = [];
+    if (unrecognizedCount > 0) {
+      parts.push(
+        unrecognizedCount === 1
+          ? '1 card has an unrecognised section label.'
+          : `${unrecognizedCount} cards have unrecognised section labels.`
+      );
+    }
+    if (formatWarningCount > 0) {
+      parts.push(
+        formatWarningCount === 1
+          ? '1 card has an unexpected format (not a single locked/free beat).'
+          : `${formatWarningCount} cards have an unexpected format (not a single locked/free beat).`
+      );
+    }
+    document.getElementById('section-warning-text').textContent = parts.join(' ');
     document.getElementById('section-warning-banner').hidden = false;
   }
 });
@@ -290,7 +303,7 @@ function renderSectionBadge(card) {
   const color = getSectionColor(card.sectionBase);
   const label = card.section || card.sectionBase || 'UNLABELLED';
   badge.className = 'section-badge';
-  if (card.sectionRecognized === false) badge.classList.add('unrecognized');
+  if (card.sectionRecognized === false || card.formatWarning) badge.classList.add('unrecognized');
   badge.style.color = color;
   badge.style.borderColor = color;
   badge.textContent = label;
