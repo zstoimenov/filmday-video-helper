@@ -20,6 +20,8 @@ html, body {
   color: var(--text);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -32,15 +34,29 @@ html, body {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  overscroll-behavior: none;
 }
 
-.view { display: flex; flex-direction: column; gap: 16px; flex: 1; min-height: 0; overflow-y: auto; }
+/* overscroll-behavion: contain stops rubber-band/bounce scrolling from
+   chaining past the scrollable region into the page underneath - without
+   it, scrolling past the top/bottom of a view on iOS can drag the whole
+   page (and the fixed bars) along with it. */
+.view {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
 .view[hidden] { display: none; }
 
 /* Filming view keeps header/progress/nav/controls fixed on screen; only the
    card text itself scrolls, so the take button never needs a scroll to reach.
    Tighter gap than other views so more of the card is visible without scrolling. */
-#view-filming { overflow: hidden; gap: 10px; }
+#view-filming { overflow: hidden; overscroll-behavior: none; gap: 10px; }
 
 .app-header {
   display: flex;
@@ -98,6 +114,7 @@ html, body {
   padding: 2px 0;
   flex: none;
   scroll-behavior: smooth;
+  overscroll-behavior: contain;
 }
 
 .card-nav-pill {
@@ -245,6 +262,8 @@ html, body {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
   user-select: none;
   -webkit-user-select: none;
@@ -385,6 +404,7 @@ html, body {
   overflow-x: auto;
   padding: 2px 0;
   flex: none;
+  overscroll-behavior: contain;
 }
 .take-chip {
   flex: none;
