@@ -1,4 +1,4 @@
-const CACHE_NAME = 'e2a-prompter-v2';
+const CACHE_NAME = 'e2a-prompter-v3';
 const APP_SHELL = [
   './',
   './index.html',
@@ -9,6 +9,7 @@ const APP_SHELL = [
   './js/parser.js',
   './js/analytics.js',
   './js/export.js',
+  './js/version.js',
   './icons/icon-192.png',
   './icons/icon-512.png',
 ];

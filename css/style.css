@@ -50,6 +50,12 @@ html, body {
   flex: 1;
 }
 
+.app-version {
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  font-weight: 400;
+}
+
 .filming-header { justify-content: space-between; }
 
 .card-progress {
