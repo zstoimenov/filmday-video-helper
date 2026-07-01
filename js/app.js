@@ -246,14 +246,14 @@ function renderCurrentCard() {
   });
 
   // Tone and b-roll share one rounded box (same visual format as the
-  // location pill) right under it, instead of separate lines at the
-  // bottom of the card, to save space.
+  // location pill) right under it, instead of at the bottom of the card,
+  // but each note still gets its own line within that box.
   const notesEl = document.getElementById('card-notes');
   const noteParts = [
     ...(card.toneNotes || []).map((t) => `🎵 ${t}`),
     ...(card.brollNotes || []).map((b) => `📷 ${b}`),
   ];
-  notesEl.textContent = noteParts.join(' · ');
+  notesEl.innerHTML = noteParts.map((p) => escapeHtml(p)).join('<br>');
 
   renderLockFreeIndicator(card, 'card-meta-lockfree');
   renderSectionBadge(card);
