@@ -20,6 +20,7 @@
       <h1>E2A Filming Prompter <span id="app-version" class="app-version"></span></h1>
       <button id="btn-new-session" class="btn btn-primary">+ New Session</button>
     </header>
+    <button id="btn-insights" class="btn btn-secondary">Section Insights (all sessions)</button>
     <div id="session-list" class="session-list"></div>
     <p id="empty-state" class="empty-state" hidden>No sessions yet. Start one to begin filming.</p>
   </section>
@@ -39,6 +40,11 @@
 
   <!-- FILMING VIEW -->
   <section id="view-filming" class="view" data-view="filming" hidden>
+    <div id="section-warning-banner" class="section-warning-banner" hidden>
+      <span id="section-warning-text"></span>
+      <button id="btn-dismiss-warning" type="button" aria-label="Dismiss">&times;</button>
+    </div>
+
     <div class="progress-row">
       <div class="progress-bar-track"><div id="progress-bar-fill" class="progress-bar-fill"></div></div>
       <span id="card-progress" class="card-progress"></span>
@@ -66,7 +72,7 @@
 
     <div class="filming-bottom-bar">
       <button class="btn btn-ghost" data-nav="home">&larr; Exit</button>
-      <div id="card-lockfree" class="lockfree-indicator"></div>
+      <div id="card-section-badge" class="section-badge-wrap"></div>
       <div class="bottom-actions">
         <button id="btn-take-mini" class="btn-take-mini">Start</button>
         <button id="btn-end-session" class="btn-end-mini" hidden>End</button>
@@ -91,6 +97,9 @@
     <h3 class="section-heading">Locked vs Free</h3>
     <div id="summary-lockedfree" class="summary-lockedfree"></div>
 
+    <h3 class="section-heading">By Section</h3>
+    <div id="summary-by-section" class="summary-by-section"></div>
+
     <h3 class="section-heading">Per-Card Breakdown</h3>
     <div id="summary-cards" class="summary-cards"></div>
 
@@ -100,6 +109,16 @@
     </div>
 
     <button class="btn btn-primary btn-large" data-nav="home">Exit to Home</button>
+  </section>
+
+  <!-- SECTION INSIGHTS: cross-session by-section stats -->
+  <section id="view-insights" class="view" data-view="insights" hidden>
+    <header class="app-header">
+      <button class="btn btn-ghost" data-nav="home">&larr; Back</button>
+      <h1>Section Insights</h1>
+    </header>
+    <p id="insights-summary" class="empty-state"></p>
+    <div id="insights-by-section" class="summary-by-section"></div>
   </section>
 
 </div>

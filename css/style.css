@@ -88,6 +88,30 @@ html, body {
   font-weight: 400;
 }
 
+.section-warning-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: rgba(255, 128, 0, 0.1);
+  border: 1px solid var(--orange-dim);
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 0.8rem;
+  color: var(--orange);
+  flex: none;
+}
+.section-warning-banner[hidden] { display: none; }
+.section-warning-banner button {
+  background: transparent;
+  border: none;
+  color: var(--orange);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 4px;
+}
+
 .progress-row {
   display: flex;
   align-items: center;
@@ -142,7 +166,9 @@ html, body {
   justify-content: center;
   cursor: pointer;
 }
-.card-nav-pill.has-takes { border-width: 2px; border-color: var(--orange); color: var(--orange); }
+/* Section color is applied inline per pill (js/sections.js); has-takes just
+   thickens the border so progress is visible without losing that color. */
+.card-nav-pill.has-takes { border-width: 2px; }
 .card-nav-pill.current {
   background: var(--orange);
   border-color: var(--orange);
@@ -340,36 +366,18 @@ html, body {
   white-space: pre-wrap;
 }
 
+/* No inline "LOCKED"/"FREE" label here (removed - it duplicated the
+   persistent pill already shown in the bottom bar and in the card header). */
 .card-locked {
   color: #fff;
   font-weight: 800;
   font-size: 2rem;
   line-height: 1.35;
 }
-.card-locked:not(:empty)::before {
-  content: '🔒 LOCKED';
-  display: block;
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  color: #fff;
-  opacity: 0.85;
-  margin-bottom: 8px;
-}
 
 .card-free {
   color: #d8d8d8;
   font-weight: 400;
-}
-.card-free:not(:empty)::before {
-  content: '🔓 FREE';
-  display: block;
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  color: var(--text-muted);
-  opacity: 0.85;
-  margin-bottom: 6px;
 }
 
 .card-idea:not(:empty) {
@@ -457,14 +465,31 @@ html, body {
 }
 .filming-bottom-bar > .btn-ghost { flex: none; }
 
-.lockfree-indicator {
+/* Section badge replaces the old lock/free pill in the bottom bar - same
+   shrink/overflow protection (min-width:0 + overflow:hidden on the wrap,
+   ellipsis on the badge itself) so it can't overlap Exit/Start/End. Color
+   is set inline per section (js/sections.js). */
+.section-badge-wrap {
   display: flex;
-  gap: 6px;
-  flex: 1;
   justify-content: center;
+  flex: 1;
   min-width: 0;
   overflow: hidden;
 }
+
+.section-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  border-radius: 999px;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+.section-badge.unrecognized { border-style: dashed; }
 
 .lf-chip {
   font-size: 0.7rem;
@@ -550,6 +575,21 @@ html, body {
 .lf-bar-row { display: flex; align-items: center; gap: 10px; font-size: 0.85rem; }
 .lf-bar-track { flex: 1; height: 10px; background: var(--bg-raised); border-radius: 6px; overflow: hidden; }
 .lf-bar-fill { height: 100%; background: var(--orange); }
+
+.summary-by-section { display: flex; flex-direction: column; gap: 8px; }
+.section-stat-row {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-left-width: 4px;
+  border-radius: 10px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.section-stat-row .ss-name { font-weight: 700; font-size: 0.9rem; }
+.section-stat-row .ss-meta { color: var(--text-muted); font-size: 0.8rem; text-align: right; }
 
 .summary-cards { display: flex; flex-direction: column; gap: 8px; }
 .summary-card-row {

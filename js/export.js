@@ -30,6 +30,8 @@ export function exportSessionCSV(session) {
     [
       'card_order',
       'card_title',
+      'section',
+      'section_base',
       'idea_text',
       'anchors',
       'locked_segments',
@@ -47,6 +49,8 @@ export function exportSessionCSV(session) {
     const base = [
       card.order,
       card.title,
+      card.section || '',
+      card.sectionBase || 'UNLABELLED',
       card.ideaText || '',
       (card.anchors || []).join('; '),
       (card.lockedSegments || []).join(' | '),
