@@ -6,8 +6,8 @@ Live app: https://zstoimenov.github.io/filmday-video-helper/
 
 ## What it does
 
-- Paste a script written in the project's scene-card format; it's parsed into a sequence of filming cards (tolerant of `CARD:`, `CARD 1:`, `## Card 1`, or numbered-list headers — falls back to a single raw card if parsing fails, so you're never blocked).
-- Each card shows its 🔒 LOCKED lines (must say exactly), 🔓 FREE delivery notes, IDEA line, and ANCHOR words (highlighted in orange wherever they appear in the card text).
+- Paste a script written in the project's scene-card format; it's parsed into a sequence of filming cards. The current format wraps every card in `---` delimiters and puts exactly one beat (one 🔒 LOCKED or 🔓 FREE block) per card, tagged with a SECTION code (`OPEN`, `CTX`, `TEASE`, `RESET`, `CORE`, `PATR`, `HEDGE`, `CLOSE`, `CTA`) in its header — nav pills and the bottom-bar section badge are colored/named to match. Older header-driven formats (`CARD:`, `CARD 1:`, `## Card 1`, numbered-list headers, multiple beats per card) are still parsed for backward compatibility, and anything unparseable falls back to a single raw card so you're never blocked. Unrecognised section codes or cards that break the one-beat rule are flagged with a dismissible warning rather than dropped.
+- Each card shows its 🔒 LOCKED lines (must say exactly), 🔓 FREE delivery notes, IDEA line, and ANCHOR words (highlighted in orange wherever they appear in the card text), plus location/shot, tone, and b-roll notes at the bottom of the card.
 - One button tracks takes: first tap starts the card's timer and logs Take 1; every subsequent tap logs Take 2, Take 3, etc. with a timestamp relative to the card's start.
 - A separate control advances to the next card (stopping that card's timer); on the last card it becomes **End Session**.
 - Swipe left/right also advances/rewinds cards.
