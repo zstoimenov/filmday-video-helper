@@ -49,13 +49,18 @@
       <span id="card-progress" class="card-progress"></span>
     </div>
 
-    <div id="card-nav" class="card-nav"></div>
+    <div class="nav-row">
+      <div id="card-nav" class="card-nav"></div>
+      <button id="btn-next-card" class="btn-next-mini">Next &rarr;</button>
+    </div>
 
     <div id="filming-card" class="filming-card">
-      <h2 id="card-title" class="card-title"></h2>
-      <div id="card-scene-row" class="card-scene-row">
-        <span id="card-location" class="scene-chip scene-location"></span>
-        <span id="card-runtime" class="scene-chip scene-runtime"></span>
+      <div class="card-title-row">
+        <h2 id="card-title" class="card-title"></h2>
+        <div id="card-scene-row" class="card-scene-row">
+          <span id="card-location" class="scene-chip scene-location"></span>
+          <span id="card-runtime" class="scene-chip scene-runtime"></span>
+        </div>
       </div>
       <div id="card-locked" class="card-segment card-locked"></div>
       <div id="card-idea" class="card-segment card-idea"></div>
@@ -67,8 +72,6 @@
     <div id="take-log" class="take-log"></div>
 
     <div class="filming-controls">
-      <button id="btn-take" class="btn btn-take">Start</button>
-      <button id="btn-next-card" class="btn btn-secondary">Next Card &rarr;</button>
       <button id="btn-end-session" class="btn btn-danger" hidden>End Session</button>
     </div>
   </section>
