@@ -161,6 +161,17 @@ function highlightAnchors(text, anchors) {
   return html;
 }
 
+function makeNoteLine(icon, text) {
+  const div = document.createElement('div');
+  div.className = 'note-line';
+  const iconSpan = document.createElement('span');
+  iconSpan.className = 'note-icon';
+  iconSpan.textContent = icon;
+  div.appendChild(iconSpan);
+  div.appendChild(document.createTextNode(text));
+  return div;
+}
+
 function renderFilming() {
   showView('filming');
   renderCurrentCard();
@@ -176,6 +187,13 @@ function renderCurrentCard() {
   document.getElementById('progress-bar-fill').style.width = `${((currentCardIndex + 1) / cards.length) * 100}%`;
   renderCardNav();
   document.getElementById('card-title').textContent = card.title;
+
+  const locationEl = document.getElementById('card-location');
+  locationEl.textContent = (card.locationNotes || []).length
+    ? `📍 ${card.locationNotes.join(' · ')}`
+    : '';
+  const runtimeEl = document.getElementById('card-runtime');
+  runtimeEl.textContent = card.estimatedRuntime ? `⏱ ~${card.estimatedRuntime}` : '';
 
   document.getElementById('card-locked').innerHTML = (card.lockedSegments || [])
     .map((seg) => highlightAnchors(seg, card.anchors))
@@ -194,6 +212,15 @@ function renderCurrentCard() {
     chip.className = 'anchor-chip';
     chip.textContent = a;
     anchorsEl.appendChild(chip);
+  });
+
+  const notesEl = document.getElementById('card-notes');
+  notesEl.innerHTML = '';
+  (card.toneNotes || []).forEach((t) => {
+    notesEl.appendChild(makeNoteLine('🎵', t));
+  });
+  (card.brollNotes || []).forEach((b) => {
+    notesEl.appendChild(makeNoteLine('📷', b));
   });
 
   renderTakeLog(card);

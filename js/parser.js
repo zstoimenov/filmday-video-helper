@@ -3,16 +3,32 @@
 // and tags segments introduced by 🔒/🔓, plus IDEA:/ANCHORS: lines. Handles both
 // single-line segments ("🔒 Say this exact line.") and label+body segments
 // ("🔒 HOOK:\nSay this exact line.") where the body runs until a blank line or
-// the next recognized marker. Production/staging notes (📍/🎵/📷/etc.) and
-// decorative separator lines are dropped rather than treated as spoken text.
+// the next recognized marker. Production/staging notes (📍 location+shot, 🎵
+// tone, 📷 b-roll) are captured as structured metadata rather than spoken
+// text; decorative separator lines are dropped entirely.
 
 const STRONG_HEADER_RE = /^\s*(?:#{1,3}\s*)?CARD\b/i;
 const LOCKED_RE = /^\s*🔒\s*(.*)$/;
 const FREE_RE = /^\s*🔓\s*(.*)$/;
 const IDEA_RE = /^\s*IDEA\s*[:\-]\s*(.*)$/i;
 const ANCHORS_RE = /^\s*ANCHORS?\s*[:\-]\s*(.*)$/i;
-const NOTE_RE = /^\s*(?:📍|🎵|📷|🎥|🎬)/;
+const LOCATION_RE = /^\s*📍\s*(.*)$/;
+const TONE_RE = /^\s*🎵\s*(?:TONE\s*[:\-]\s*)?(.*)$/i;
+const BROLL_RE = /^\s*📷\s*(?:B-?ROLL\s*[:\-]\s*)?(.*)$/i;
+const OTHER_NOTE_RE = /^\s*(?:🎥|🎬)/;
 const SEPARATOR_RE = /^[-=─═_*]{3,}$/;
+const RUNTIME_RE = /~\s*(\d+(?:\s*[-–]\s*\d+)?)\s*s(?:ec)?\.?\s*$/i;
+
+// Pulls a trailing "~15s." / "~30-45s." estimate off a location line and
+// returns the cleaned text plus the runtime (e.g. "15s" / "30-45s"), if any.
+function extractRuntime(text) {
+  const match = text.match(RUNTIME_RE);
+  if (!match) return { text, runtime: null };
+  return {
+    text: text.slice(0, match.index).trim(),
+    runtime: `${match[1].replace(/\s*[-–]\s*/, '-')}s`,
+  };
+}
 
 function matchStrongHeader(line) {
   if (!STRONG_HEADER_RE.test(line)) return null;
@@ -57,6 +73,10 @@ function parseBlock(block, index) {
   const locked = [];
   const free = [];
   const ideas = [];
+  const locationNotes = [];
+  const toneNotes = [];
+  const brollNotes = [];
+  let estimatedRuntime = '';
   let anchors = [];
   let title = block.title;
 
@@ -79,8 +99,31 @@ function parseBlock(block, index) {
       flush();
       continue;
     }
-    if (NOTE_RE.test(line) || SEPARATOR_RE.test(line)) {
+    if (OTHER_NOTE_RE.test(line) || SEPARATOR_RE.test(line)) {
       flush();
+      continue;
+    }
+
+    const locationMatch = line.match(LOCATION_RE);
+    if (locationMatch) {
+      flush();
+      const { text, runtime } = extractRuntime(locationMatch[1].trim());
+      if (text) locationNotes.push(text);
+      if (runtime) estimatedRuntime = runtime;
+      continue;
+    }
+    const toneMatch = line.match(TONE_RE);
+    if (toneMatch) {
+      flush();
+      const val = toneMatch[1].trim();
+      if (val) toneNotes.push(val);
+      continue;
+    }
+    const brollMatch = line.match(BROLL_RE);
+    if (brollMatch) {
+      flush();
+      const val = brollMatch[1].trim();
+      if (val) brollNotes.push(val);
       continue;
     }
 
@@ -149,6 +192,10 @@ function parseBlock(block, index) {
     anchors,
     lockedSegments: locked,
     freeSegments: free,
+    locationNotes,
+    toneNotes,
+    brollNotes,
+    estimatedRuntime,
   };
 }
 
@@ -195,6 +242,10 @@ export function buildCards(rawText) {
         anchors: [],
         lockedSegments: [],
         freeSegments: rawText ? [rawText.trim()] : [],
+        locationNotes: [],
+        toneNotes: [],
+        brollNotes: [],
+        estimatedRuntime: '',
       },
     ];
   }
@@ -207,6 +258,10 @@ export function buildCards(rawText) {
     anchors: c.anchors,
     lockedSegments: c.lockedSegments,
     freeSegments: c.freeSegments,
+    locationNotes: c.locationNotes || [],
+    toneNotes: c.toneNotes || [],
+    brollNotes: c.brollNotes || [],
+    estimatedRuntime: c.estimatedRuntime || '',
     takes: [],
   }));
 }
