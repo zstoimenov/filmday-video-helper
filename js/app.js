@@ -269,7 +269,6 @@ function renderTakeLog(card) {
 
 function updateTakeButton(card) {
   const label = card.takes.length ? `Take ${card.takes.length + 1}` : 'Start';
-  document.getElementById('btn-take').textContent = label;
   document.getElementById('btn-take-mini').textContent = label;
 }
 
@@ -288,7 +287,6 @@ async function handleTake() {
   await saveSession(currentSession);
 }
 
-document.getElementById('btn-take').addEventListener('click', handleTake);
 document.getElementById('btn-take-mini').addEventListener('click', handleTake);
 
 document.getElementById('btn-next-card').addEventListener('click', async () => {

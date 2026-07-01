@@ -38,8 +38,9 @@ html, body {
 .view[hidden] { display: none; }
 
 /* Filming view keeps header/progress/nav/controls fixed on screen; only the
-   card text itself scrolls, so the take button never needs a scroll to reach. */
-#view-filming { overflow: hidden; }
+   card text itself scrolls, so the take button never needs a scroll to reach.
+   Tighter gap than other views so more of the card is visible without scrolling. */
+#view-filming { overflow: hidden; gap: 10px; }
 
 .app-header {
   display: flex;
@@ -104,12 +105,20 @@ html, body {
   white-space: nowrap;
 }
 
+.nav-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: none;
+}
+
 .card-nav {
   display: flex;
   gap: 6px;
   overflow-x: auto;
   padding: 2px 0;
-  flex: none;
+  flex: 1;
+  min-width: 0;
 }
 
 .card-nav-pill {
@@ -134,6 +143,23 @@ html, body {
   border-color: var(--orange);
   color: #140a00;
 }
+
+/* Deliberately styled far from .btn-take-mini (muted, not orange, and a
+   whole row below it) so it's easy to tell apart from the take button and
+   hard to hit by accident while reaching for it. */
+.btn-next-mini {
+  flex: none;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-weight: 700;
+  font-size: 0.8rem;
+  padding: 8px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.btn-next-mini:active { background: var(--border); }
+.btn-next-mini[hidden] { display: none; }
 
 /* Buttons */
 .btn {
@@ -253,39 +279,51 @@ html, body {
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 16px;
-  padding: 22px 20px;
+  padding: 16px 18px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
   flex: 1;
   min-height: 0;
   overflow-y: auto;
 }
 
+.card-title-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
 .card-title {
   margin: 0;
-  font-size: 1.4rem;
+  font-size: 1.1rem;
+  line-height: 1.25;
   color: var(--orange);
 }
 
 .card-scene-row {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 6px;
-  margin-top: -8px;
+  min-width: 0;
 }
 .card-scene-row:empty { display: none; }
 
 .scene-chip {
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   color: var(--text-muted);
   background: var(--bg-raised);
   border: 1px solid var(--border);
   border-radius: 999px;
   padding: 3px 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .scene-chip:empty { display: none; }
+.scene-location { flex: 1; min-width: 0; }
 .scene-runtime {
+  flex: none;
   color: var(--orange);
   border-color: var(--orange-dim);
 }
@@ -397,22 +435,9 @@ html, body {
 }
 
 .filming-controls {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 10px;
   flex: none;
 }
-
-.btn-take {
-  background: var(--orange);
-  border-color: var(--orange);
-  color: #140a00;
-  font-size: 1.4rem;
-  padding: 26px;
-  border-radius: 16px;
-  font-weight: 800;
-}
-.btn-take:active { background: #e37300; }
+.filming-controls:has(> [hidden]:only-child) { display: none; }
 
 /* Summary */
 .summary-totals {
@@ -467,6 +492,4 @@ html, body {
 @media (min-width: 600px) {
   .card-segment { font-size: 1.8rem; }
   .card-locked { font-size: 2.3rem; }
-  .btn-take { font-size: 1.6rem; }
-  .filming-controls { grid-template-columns: 2fr 1fr; }
 }
