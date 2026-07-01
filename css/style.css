@@ -298,10 +298,11 @@ html, body {
 .card-meta-row {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
 }
 
-.card-lockfree { display: flex; gap: 6px; }
+.card-lockfree { display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; }
 
 .scene-chip {
   font-size: 0.7rem;
@@ -442,14 +443,19 @@ html, body {
 }
 
 /* Bottom bar: fixed at the foot of the screen for one-handed thumb reach
-   on larger phones. Exit / lock-free status / take+end all live here. */
+   on larger phones. Exit / lock-free status / take+end all live here.
+   Exit and the action buttons never shrink (keeps them full-size, tappable
+   targets); the lock-free indicator in the middle is the only part that
+   gives up space, and its chips clip with an ellipsis instead of
+   overflowing their box and overlapping the buttons on either side. */
 .filming-bottom-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 8px;
   flex: none;
 }
+.filming-bottom-bar > .btn-ghost { flex: none; }
 
 .lockfree-indicator {
   display: flex;
@@ -457,6 +463,7 @@ html, body {
   flex: 1;
   justify-content: center;
   min-width: 0;
+  overflow: hidden;
 }
 
 .lf-chip {
@@ -467,6 +474,10 @@ html, body {
   padding: 4px 10px;
   border: 1px solid var(--border);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  flex-shrink: 1;
 }
 .lf-chip.lf-locked { color: #fff; border-color: #fff; }
 .lf-chip.lf-free { color: var(--text-muted); }
