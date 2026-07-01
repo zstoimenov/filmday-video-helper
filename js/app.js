@@ -1,5 +1,5 @@
 import { saveSession, getSession, getAllSessions, deleteSession, genId } from './db.js';
-import { buildCards } from './parser.js';
+import { buildCards, extractTitleDate } from './parser.js';
 import { computeSessionStats, computeCrossSessionSectionStats, formatMs } from './analytics.js';
 import { exportSessionJSON, exportSessionCSV } from './export.js';
 import { APP_VERSION } from './version.js';
@@ -123,6 +123,17 @@ function renderNew() {
   document.getElementById('script-input').value = '';
 }
 
+// The v4 paste-block wrapper always carries the episode title and air date
+// in the same spot, so the title field fills itself in from the pasted
+// script instead of being typed by hand. Older pastes without that wrapper
+// leave whatever the user already typed alone.
+document.getElementById('script-input').addEventListener('input', (e) => {
+  const { episodeNumber, title, date } = extractTitleDate(e.target.value);
+  if (!title) return;
+  const titleField = document.getElementById('session-title');
+  titleField.value = [episodeNumber ? `Ep ${episodeNumber} — ${title}` : title, date].filter(Boolean).join(' · ');
+});
+
 document.getElementById('btn-parse').addEventListener('click', async () => {
   const titleInput = document.getElementById('session-title').value.trim();
   const scriptText = document.getElementById('script-input').value;
@@ -190,17 +201,6 @@ function highlightAnchors(text, anchors) {
   return html;
 }
 
-function makeNoteLine(icon, text) {
-  const div = document.createElement('div');
-  div.className = 'note-line';
-  const iconSpan = document.createElement('span');
-  iconSpan.className = 'note-icon';
-  iconSpan.textContent = icon;
-  div.appendChild(iconSpan);
-  div.appendChild(document.createTextNode(text));
-  return div;
-}
-
 function renderFilming() {
   showView('filming');
   document.getElementById('section-warning-banner').hidden = true;
@@ -223,6 +223,8 @@ function renderCurrentCard() {
     : '';
   const runtimeEl = document.getElementById('card-runtime');
   runtimeEl.textContent = card.estimatedRuntime ? `⏱ ~${card.estimatedRuntime}` : '';
+  const ideaBadgeEl = document.getElementById('card-idea-badge');
+  ideaBadgeEl.textContent = card.ideaText ? 'IDEA' : '';
 
   document.getElementById('card-locked').innerHTML = (card.lockedSegments || [])
     .map((seg) => highlightAnchors(seg, card.anchors))
@@ -243,14 +245,15 @@ function renderCurrentCard() {
     anchorsEl.appendChild(chip);
   });
 
+  // Tone and b-roll share one rounded box (same visual format as the
+  // location pill) right under it, instead of separate lines at the
+  // bottom of the card, to save space.
   const notesEl = document.getElementById('card-notes');
-  notesEl.innerHTML = '';
-  (card.toneNotes || []).forEach((t) => {
-    notesEl.appendChild(makeNoteLine('🎵', t));
-  });
-  (card.brollNotes || []).forEach((b) => {
-    notesEl.appendChild(makeNoteLine('📷', b));
-  });
+  const noteParts = [
+    ...(card.toneNotes || []).map((t) => `🎵 ${t}`),
+    ...(card.brollNotes || []).map((b) => `📷 ${b}`),
+  ];
+  notesEl.textContent = noteParts.join(' · ');
 
   renderLockFreeIndicator(card, 'card-meta-lockfree');
   renderSectionBadge(card);
@@ -319,10 +322,13 @@ function renderLockFreeIndicator(card, elementId) {
     chip.textContent = '🔒 LOCKED';
     el.appendChild(chip);
   }
-  if ((card.freeSegments || []).length) {
+  // A v3/v4 FREE beat's content is its IDEA/ANCHORS, not freeSegments text
+  // (that stays empty), so the chip has to key off ideaText too - otherwise
+  // it never shows for the current script format at all.
+  if ((card.freeSegments || []).length || card.ideaText) {
     const chip = document.createElement('span');
     chip.className = 'lf-chip lf-free';
-    chip.textContent = '🔓 FREE';
+    chip.textContent = '🔓 UNLOCKED';
     el.appendChild(chip);
   }
 }
