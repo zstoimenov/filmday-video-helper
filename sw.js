@@ -1,4 +1,4 @@
-const CACHE_NAME = 'e2a-prompter-v5';
+const CACHE_NAME = 'e2a-prompter-v6';
 const APP_SHELL = [
   './',
   './index.html',
@@ -16,7 +16,23 @@ const APP_SHELL = [
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)).then(() => self.skipWaiting())
+    caches
+      .open(CACHE_NAME)
+      .then((cache) =>
+        Promise.all(
+          // cache.addAll() uses the browser's default HTTP cache, which can
+          // silently reuse a stale response (GitHub Pages sets Cache-Control
+          // on served files) and bake old bytes into a brand-new versioned
+          // cache. Force a real network fetch for every app-shell file so a
+          // version bump always pulls the actual latest content.
+          APP_SHELL.map((url) =>
+            fetch(url, { cache: 'reload' }).then((response) => {
+              if (response && response.ok) return cache.put(url, response);
+            })
+          )
+        )
+      )
+      .then(() => self.skipWaiting())
   );
 });
 
@@ -34,7 +50,7 @@ self.addEventListener('fetch', (event) => {
 
   event.respondWith(
     caches.match(event.request).then((cached) => {
-      const fetchPromise = fetch(event.request)
+      const fetchPromise = fetch(event.request, { cache: 'no-cache' })
         .then((response) => {
           if (response && response.ok) {
             const clone = response.clone();
