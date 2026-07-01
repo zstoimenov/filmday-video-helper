@@ -15,3 +15,12 @@ already installed the PWA unless `CACHE_NAME` in `sw.js` is bumped
 file.** Skipping this means the user is testing stale code on their
 phone. After bumping, the user still needs to fully close/reopen the
 app (or reload twice) for the new service worker to take over.
+
+## App version indicator
+
+The header shows a small grey version string (from `js/version.js`,
+`APP_VERSION`) next to the app title, so the user can confirm on their
+phone which build they're actually running. **Bump `APP_VERSION` in
+`js/version.js` together with `CACHE_NAME` in `sw.js` on every push**,
+using the same version number in both (e.g. both `v4`) so the two stay
+easy to correlate.

@@ -2,12 +2,15 @@ import { saveSession, getSession, getAllSessions, deleteSession, genId } from '.
 import { buildCards } from './parser.js';
 import { computeSessionStats, formatMs } from './analytics.js';
 import { exportSessionJSON, exportSessionCSV } from './export.js';
+import { APP_VERSION } from './version.js';
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('sw.js').catch(() => {});
   });
 }
+
+document.getElementById('app-version').textContent = APP_VERSION;
 
 const views = document.querySelectorAll('.view');
 let currentSession = null; // in-memory working session during filming
