@@ -5,9 +5,19 @@
 // ("🔒 HOOK:\nSay this exact line.") where the body runs until a blank line or
 // the next recognized marker. Production/staging notes (📍 location+shot, 🎵
 // tone, 📷 b-roll) are captured as structured metadata rather than spoken
-// text; decorative separator lines are dropped entirely.
+// text; decorative separator lines (including the standalone "---" that ends
+// every card in the v2 script format) are dropped entirely - block splitting
+// is driven by the header lines themselves, so the divider is a no-op.
+//
+// v2 headers additionally carry a SECTION code right after the card number:
+// "## CARD 8 — CORE-2 Минутите" -> section "CORE-2", sectionBase "CORE",
+// label "Минутите". SECTION is a closed set (see sections.js) but an
+// unrecognised code is still parsed normally and just flagged, per spec.
+
+import { KNOWN_SECTIONS } from './sections.js';
 
 const STRONG_HEADER_RE = /^\s*(?:#{1,3}\s*)?CARD\b/i;
+const SECTION_TOKEN_RE = /^([A-Z]{2,10})(-\d+)?\s+(.*)$/;
 const LOCKED_RE = /^\s*🔒\s*(.*)$/;
 const FREE_RE = /^\s*🔓\s*(.*)$/;
 const IDEA_RE = /^\s*IDEA\s*[:\-]\s*(.*)$/i;
@@ -41,6 +51,20 @@ function matchNumberedHeader(line) {
   return m ? m[1].trim() : null;
 }
 
+// Splits a leading SECTION token (e.g. "CORE-2") off the rest of a header's
+// title text. Only called for "## CARD N — ..." style headers, since the
+// section concept doesn't apply to the older numbered-list fallback format.
+function parseSectionAndLabel(rawTitle) {
+  const m = rawTitle.match(SECTION_TOKEN_RE);
+  if (!m) {
+    return { section: '', sectionBase: 'UNLABELLED', sectionRecognized: false, label: rawTitle };
+  }
+  const base = m[1];
+  const section = base + (m[2] || '');
+  const label = (m[3] || '').trim() || section;
+  return { section, sectionBase: base, sectionRecognized: KNOWN_SECTIONS.includes(base), label };
+}
+
 function splitIntoBlocks(text) {
   const lines = text.split(/\r?\n/);
   const hasStrongHeaders = lines.some((l) => STRONG_HEADER_RE.test(l));
@@ -49,17 +73,23 @@ function splitIntoBlocks(text) {
   let current = null;
 
   for (const line of lines) {
-    let title = null;
+    let rawTitle = null;
+    let isStrong = false;
     if (hasStrongHeaders) {
-      title = matchStrongHeader(line);
+      rawTitle = matchStrongHeader(line);
+      isStrong = rawTitle !== null;
     } else {
-      title = matchStrongHeader(line);
-      if (title === null) title = matchNumberedHeader(line);
+      rawTitle = matchStrongHeader(line);
+      isStrong = rawTitle !== null;
+      if (rawTitle === null) rawTitle = matchNumberedHeader(line);
     }
 
-    if (title !== null) {
+    if (rawTitle !== null) {
       if (current) blocks.push(current);
-      current = { title, lines: [] };
+      const sectionInfo = isStrong
+        ? parseSectionAndLabel(rawTitle)
+        : { section: '', sectionBase: 'UNLABELLED', sectionRecognized: undefined, label: rawTitle };
+      current = { title: sectionInfo.label, ...sectionInfo, lines: [] };
     } else if (current) {
       current.lines.push(line);
     }
@@ -188,6 +218,9 @@ function parseBlock(block, index) {
 
   return {
     title,
+    section: block.section || '',
+    sectionBase: block.sectionBase || 'UNLABELLED',
+    sectionRecognized: block.sectionRecognized,
     ideaText: ideas.join('\n\n'),
     anchors,
     lockedSegments: locked,
@@ -238,6 +271,9 @@ export function buildCards(rawText) {
     parsed = [
       {
         title: 'Card 1',
+        section: '',
+        sectionBase: 'UNLABELLED',
+        sectionRecognized: undefined,
         ideaText: '',
         anchors: [],
         lockedSegments: [],
@@ -254,6 +290,9 @@ export function buildCards(rawText) {
     id: `card-${i}-${Math.random().toString(36).slice(2, 7)}`,
     order: i,
     title: c.title,
+    section: c.section || '',
+    sectionBase: c.sectionBase || 'UNLABELLED',
+    sectionRecognized: c.sectionRecognized,
     ideaText: c.ideaText,
     anchors: c.anchors,
     lockedSegments: c.lockedSegments,

@@ -1,8 +1,9 @@
 import { saveSession, getSession, getAllSessions, deleteSession, genId } from './db.js';
 import { buildCards } from './parser.js';
-import { computeSessionStats, formatMs } from './analytics.js';
+import { computeSessionStats, computeCrossSessionSectionStats, formatMs } from './analytics.js';
 import { exportSessionJSON, exportSessionCSV } from './export.js';
 import { APP_VERSION } from './version.js';
+import { getSectionColor } from './sections.js';
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
@@ -48,6 +49,7 @@ function navigate(name, ctx) {
   if (name === 'new') renderNew();
   if (name === 'filming') renderFilming();
   if (name === 'summary') renderSummary(ctx);
+  if (name === 'insights') renderInsights();
 }
 
 // ---------- HOME ----------
@@ -111,6 +113,7 @@ async function openSession(id) {
 }
 
 document.getElementById('btn-new-session').addEventListener('click', () => navigate('new'));
+document.getElementById('btn-insights').addEventListener('click', () => navigate('insights'));
 
 // ---------- NEW SESSION ----------
 
@@ -139,6 +142,19 @@ document.getElementById('btn-parse').addEventListener('click', async () => {
   currentCardIndex = 0;
   cardStartTime = null;
   navigate('filming');
+
+  const unrecognizedCount = cards.filter((c) => c.sectionRecognized === false).length;
+  if (unrecognizedCount > 0) {
+    document.getElementById('section-warning-text').textContent =
+      unrecognizedCount === 1
+        ? '1 card has an unrecognised section label.'
+        : `${unrecognizedCount} cards have unrecognised section labels.`;
+    document.getElementById('section-warning-banner').hidden = false;
+  }
+});
+
+document.getElementById('btn-dismiss-warning').addEventListener('click', () => {
+  document.getElementById('section-warning-banner').hidden = true;
 });
 
 // ---------- FILMING ----------
@@ -174,6 +190,7 @@ function makeNoteLine(icon, text) {
 
 function renderFilming() {
   showView('filming');
+  document.getElementById('section-warning-banner').hidden = true;
   renderCurrentCard();
 }
 
@@ -223,7 +240,7 @@ function renderCurrentCard() {
   });
 
   renderLockFreeIndicator(card, 'card-meta-lockfree');
-  renderLockFreeIndicator(card, 'card-lockfree');
+  renderSectionBadge(card);
   renderTakeLog(card);
   updateTakeButton(card);
 
@@ -246,6 +263,13 @@ function renderCardNav() {
     if (i === currentCardIndex) {
       pill.classList.add('current');
       currentPill = pill;
+    } else {
+      // The current pill keeps its solid orange "you are here" fill; every
+      // other pill is tinted by its section so the strip reads as a map of
+      // the script's structure at a glance.
+      const color = getSectionColor(card.sectionBase);
+      pill.style.borderColor = color;
+      pill.style.color = color;
     }
     if (card.takes.length) pill.classList.add('has-takes');
     pill.textContent = i + 1;
@@ -257,6 +281,20 @@ function renderCardNav() {
   if (currentPill) {
     currentPill.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
   }
+}
+
+function renderSectionBadge(card) {
+  const wrap = document.getElementById('card-section-badge');
+  wrap.innerHTML = '';
+  const badge = document.createElement('span');
+  const color = getSectionColor(card.sectionBase);
+  const label = card.section || card.sectionBase || 'UNLABELLED';
+  badge.className = 'section-badge';
+  if (card.sectionRecognized === false) badge.classList.add('unrecognized');
+  badge.style.color = color;
+  badge.style.borderColor = color;
+  badge.textContent = label;
+  wrap.appendChild(badge);
 }
 
 function renderLockFreeIndicator(card, elementId) {
@@ -507,6 +545,8 @@ function renderSummary(session) {
     </div>
   `;
 
+  renderSectionStatRows(document.getElementById('summary-by-section'), stats.bySection);
+
   const cardsEl = document.getElementById('summary-cards');
   cardsEl.innerHTML = '';
   stats.perCard.forEach((c, i) => {
@@ -522,6 +562,41 @@ function renderSummary(session) {
 
   document.getElementById('btn-export-json').onclick = () => exportSessionJSON(s);
   document.getElementById('btn-export-csv').onclick = () => exportSessionCSV(s);
+}
+
+// Shared by the per-session "By Section" breakdown and the cross-session
+// Insights view - both show the same shape of aggregated section stats.
+function renderSectionStatRows(container, bySection) {
+  container.innerHTML = '';
+  if (!bySection.length) {
+    container.innerHTML = '<p class="empty-state">No section data yet.</p>';
+    return;
+  }
+  bySection.forEach((s) => {
+    const color = getSectionColor(s.sectionBase);
+    const row = document.createElement('div');
+    row.className = 'section-stat-row';
+    row.style.borderLeftColor = color;
+    row.innerHTML = `
+      <span class="ss-name" style="color:${color}">${escapeHtml(s.sectionBase)}</span>
+      <span class="ss-meta">${s.cardCount} card${s.cardCount === 1 ? '' : 's'} &middot; ${s.takeCount} takes &middot; avg ${formatMs(s.avgTimePerTake)}/take</span>
+    `;
+    container.appendChild(row);
+  });
+}
+
+// ---------- SECTION INSIGHTS (cross-session) ----------
+
+async function renderInsights() {
+  showView('insights');
+  const sessions = await getAllSessions();
+  const stats = computeCrossSessionSectionStats(sessions);
+
+  document.getElementById('insights-summary').textContent = stats.sessionCount
+    ? `Across ${stats.sessionCount} session${stats.sessionCount === 1 ? '' : 's'}.`
+    : 'No sessions yet.';
+
+  renderSectionStatRows(document.getElementById('insights-by-section'), stats.bySection);
 }
 
 // ---------- INIT ----------

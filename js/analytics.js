@@ -15,11 +15,32 @@ function cardStats(card) {
   return {
     cardId: card.id,
     title: card.title,
+    sectionBase: card.sectionBase || 'UNLABELLED',
     takeCount,
     durations,
     totalTime,
     avgTimePerTake,
   };
+}
+
+// Groups a flat list of per-card stats (from one session or many) by
+// sectionBase, aggregating take counts and timing so patterns like "HEDGE
+// cards average more retakes than CORE cards" are visible.
+function groupBySection(perCardList) {
+  const bySection = new Map();
+  for (const c of perCardList) {
+    const key = c.sectionBase || 'UNLABELLED';
+    if (!bySection.has(key)) {
+      bySection.set(key, { sectionBase: key, cardCount: 0, takeCount: 0, totalTime: 0 });
+    }
+    const bucket = bySection.get(key);
+    bucket.cardCount += 1;
+    bucket.takeCount += c.takeCount;
+    bucket.totalTime += c.totalTime;
+  }
+  return Array.from(bySection.values())
+    .map((b) => ({ ...b, avgTimePerTake: b.takeCount ? b.totalTime / b.takeCount : 0 }))
+    .sort((a, b) => b.takeCount - a.takeCount);
 }
 
 function isLockedHeavy(card) {
@@ -53,8 +74,20 @@ export function computeSessionStats(session) {
     totalTakes,
     totalTime,
     perCard,
+    bySection: groupBySection(perCard),
     flagged: { mostRetakes, longestAvgTake },
     lockedVsFree: { lockedHeavyTakes, freeHeavyTakes },
+  };
+}
+
+// Aggregates by-section stats across every session in history, so patterns
+// (e.g. "HEDGE cards average more retakes than CORE cards") show up over
+// time rather than being locked inside a single session's numbers.
+export function computeCrossSessionSectionStats(sessions) {
+  const allCardStats = (sessions || []).flatMap((s) => (s.cards || []).map(cardStats));
+  return {
+    sessionCount: (sessions || []).length,
+    bySection: groupBySection(allCardStats),
   };
 }
 
