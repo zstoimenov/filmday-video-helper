@@ -222,7 +222,8 @@ function renderCurrentCard() {
     notesEl.appendChild(makeNoteLine('📷', b));
   });
 
-  renderLockFreeIndicator(card);
+  renderLockFreeIndicator(card, 'card-meta-lockfree');
+  renderLockFreeIndicator(card, 'card-lockfree');
   renderTakeLog(card);
   updateTakeButton(card);
 
@@ -258,8 +259,8 @@ function renderCardNav() {
   }
 }
 
-function renderLockFreeIndicator(card) {
-  const el = document.getElementById('card-lockfree');
+function renderLockFreeIndicator(card, elementId) {
+  const el = document.getElementById(elementId);
   el.innerHTML = '';
   if ((card.lockedSegments || []).length) {
     const chip = document.createElement('span');
@@ -284,12 +285,19 @@ function jumpToCard(i) {
 function renderTakeLog(card) {
   const log = document.getElementById('take-log');
   log.innerHTML = '';
+  let lastChip = null;
   card.takes.forEach((t) => {
     const chip = document.createElement('span');
     chip.className = 'take-chip';
     chip.textContent = `Take ${t.takeNumber} · ${formatMs(t.timestamp)}`;
     log.appendChild(chip);
+    lastChip = chip;
   });
+  // Always reveal the most recent take instead of leaving the strip
+  // scrolled wherever it happened to be for the previous card.
+  if (lastChip) {
+    lastChip.scrollIntoView({ behavior: 'smooth', inline: 'end', block: 'nearest' });
+  }
 }
 
 function updateTakeButton(card) {

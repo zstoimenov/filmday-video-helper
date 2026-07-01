@@ -13,6 +13,15 @@
 
 * { box-sizing: border-box; }
 
+/* Scrollable but no visible scrollbar/track - used on the card content,
+   page-number strip, and take-pill strip so scrolling still works without
+   a distracting slider appearing over the UI. */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar { display: none; width: 0; height: 0; }
+
 html, body {
   margin: 0;
   padding: 0;
@@ -273,23 +282,26 @@ html, body {
 .card-title-row {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
+  width: 100%;
 }
 
 .card-title {
   margin: 0;
+  width: 100%;
   font-size: 1.1rem;
   line-height: 1.25;
   color: var(--orange);
 }
 
-.card-scene-row {
+/* Locked/Free + estimated runtime: one compact line right under the title. */
+.card-meta-row {
   display: flex;
-  flex-wrap: nowrap;
-  gap: 6px;
-  min-width: 0;
+  align-items: center;
+  gap: 8px;
 }
-.card-scene-row:empty { display: none; }
+
+.card-lockfree { display: flex; gap: 6px; }
 
 .scene-chip {
   font-size: 0.7rem;
@@ -299,16 +311,27 @@ html, body {
   border-radius: 999px;
   padding: 3px 10px;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 .scene-chip:empty { display: none; }
-.scene-location { flex: 1; min-width: 0; }
 .scene-runtime {
   flex: none;
   color: var(--orange);
   border-color: var(--orange-dim);
 }
+
+/* Location + shot instructions: its own full-width line so it has room to
+   read without truncating. */
+.location-pill {
+  font-size: 0.72rem;
+  line-height: 1.4;
+  color: var(--text-muted);
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 6px 10px;
+  width: 100%;
+}
+.location-pill:empty { display: none; }
 
 .card-segment {
   font-size: 1.6rem;
@@ -404,6 +427,7 @@ html, body {
   overflow-x: auto;
   padding: 2px 0;
   flex: none;
+  scroll-behavior: smooth;
   overscroll-behavior: contain;
 }
 .take-chip {
