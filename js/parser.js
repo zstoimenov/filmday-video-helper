@@ -44,6 +44,52 @@ const OTHER_NOTE_RE = /^\s*(?:🎥|🎬)/;
 const SEPARATOR_RE = /^[-=─═_*]{3,}$/;
 const RUNTIME_RE = /~\s*(\d+(?:\s*[-–]\s*\d+)?)\s*s(?:ec)?\.?\s*$/i;
 
+// The v4 paste-block wrapper always puts the episode title and air date on
+// their own lines, ahead of the first "---": "[31] Episode title text" and
+// "YouTube: 14/07/2026". Both are only searched for in the preamble (the
+// lines before the first card delimiter), so they can't accidentally match
+// something inside a card's own content.
+const TITLE_LINE_RE = /^\[(\d+)\]\s*(.+)$/;
+const DATE_LINE_RE = /^([A-Za-zА-Яа-я]+)\s*:\s*(\d{1,2}\/\d{1,2}\/\d{4})\s*$/;
+
+// Pulls "Ep 31 — Episode title · 14/07/2026" out of the paste-block wrapper,
+// if present. Returns null fields when the wrapper isn't there (older pastes,
+// or a script pasted without its header block) so callers can leave whatever
+// the user already typed untouched.
+export function extractTitleDate(rawText) {
+  const text = (rawText || '').trim();
+  if (!text) return { episodeNumber: null, title: null, date: null };
+
+  const lines = text.split(/\r?\n/);
+  const delimIdx = lines.findIndex((l) => CARD_DELIM_RE.test(l.trim()));
+  const preamble = delimIdx === -1 ? lines : lines.slice(0, delimIdx);
+
+  let episodeNumber = null;
+  let title = null;
+  let date = null;
+
+  for (const rawLine of preamble) {
+    const line = rawLine.trim();
+    if (!line) continue;
+    if (title === null) {
+      const titleMatch = line.match(TITLE_LINE_RE);
+      if (titleMatch) {
+        episodeNumber = titleMatch[1];
+        title = titleMatch[2].trim();
+        continue;
+      }
+    }
+    if (date === null) {
+      const dateMatch = line.match(DATE_LINE_RE);
+      if (dateMatch) {
+        date = dateMatch[2];
+      }
+    }
+  }
+
+  return { episodeNumber, title, date };
+}
+
 // Pulls a trailing "~15s." / "~30-45s." estimate off a location line and
 // returns the cleaned text plus the runtime (e.g. "15s" / "30-45s"), if any.
 function extractRuntime(text) {

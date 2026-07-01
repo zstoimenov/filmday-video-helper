@@ -345,10 +345,18 @@ html, body {
   color: var(--orange);
   border-color: var(--orange-dim);
 }
+.scene-idea {
+  flex: none;
+  color: var(--orange);
+  border-color: var(--orange);
+  font-weight: 700;
+}
 
-/* Location + shot instructions: its own full-width line so it has room to
-   read without truncating. */
-.location-pill {
+/* Location + shot instructions, and tone/b-roll: matching full-width rounded
+   boxes so they read as one family of production-note pills. Tone and
+   b-roll share a single box (rather than one each) to save vertical space. */
+.location-pill,
+.card-notes {
   font-size: 0.72rem;
   line-height: 1.4;
   color: var(--text-muted);
@@ -358,7 +366,8 @@ html, body {
   padding: 6px 10px;
   width: 100%;
 }
-.location-pill:empty { display: none; }
+.location-pill:empty,
+.card-notes:empty { display: none; }
 
 .card-segment {
   font-size: 1.6rem;
@@ -366,34 +375,17 @@ html, body {
   white-space: pre-wrap;
 }
 
-/* No inline "LOCKED"/"FREE" label here (removed - it duplicated the
-   persistent pill already shown in the bottom bar and in the card header). */
-.card-locked {
+/* LOCKED lines, FREE lines, and the IDEA prompt all read as "the script
+   text" for the card that's showing - one consistent white/bold/big style.
+   The IDEA label itself moved out to the pill in the meta row, so there's
+   no inline label here any more. */
+.card-locked,
+.card-free,
+.card-idea {
   color: #fff;
   font-weight: 800;
   font-size: 2rem;
   line-height: 1.35;
-}
-
-.card-free {
-  color: #d8d8d8;
-  font-weight: 400;
-}
-
-.card-idea:not(:empty) {
-  color: var(--text-muted);
-  font-size: 1.05rem;
-  font-style: italic;
-}
-.card-idea:not(:empty)::before {
-  content: 'IDEA';
-  display: block;
-  font-style: normal;
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  color: var(--text-muted);
-  margin-bottom: 4px;
 }
 
 .card-anchors { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -411,24 +403,6 @@ html, body {
   color: var(--orange);
   font-weight: 700;
 }
-
-.card-notes {
-  margin-top: auto;
-  padding-top: 12px;
-  border-top: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.card-notes:empty { display: none; border: none; padding: 0; }
-
-.note-line {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  font-style: italic;
-  line-height: 1.4;
-}
-.note-line .note-icon { font-style: normal; margin-right: 4px; }
 
 .take-log {
   display: flex;
@@ -504,8 +478,11 @@ html, body {
   min-width: 0;
   flex-shrink: 1;
 }
-.lf-chip.lf-locked { color: #fff; border-color: #fff; }
-.lf-chip.lf-free { color: var(--text-muted); }
+.lf-chip.lf-locked,
+.lf-chip.lf-free {
+  color: #fff;
+  border-color: #fff;
+}
 
 .bottom-actions {
   display: flex;
@@ -611,5 +588,9 @@ html, body {
 
 @media (min-width: 600px) {
   .card-segment { font-size: 1.8rem; }
-  .card-locked { font-size: 2.3rem; }
+  .card-locked,
+  .card-free,
+  .card-idea {
+    font-size: 2.3rem;
+  }
 }
