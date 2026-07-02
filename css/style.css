@@ -39,6 +39,16 @@ html, body {
   margin: 0 auto;
   height: 100vh;
   height: 100dvh;
+  /* iOS Safari reports a stale (too-tall) viewport height for the first
+     paint after a cold launch from the home-screen icon - it settles to
+     the correct value only after the standalone chrome/safe-area finishes
+     animating in, which happens post-paint. That stale height pushes the
+     bottom bar below the fold until something (any resize/orientation
+     event, or relaunching once the value is cached) forces a reflow. --vh
+     is measured in JS from the actual window.innerHeight and kept in sync
+     via resize/orientation/pageshow listeners (see js/app.js), so it
+     overrides the dvh value as soon as the real height is known. */
+  height: calc(var(--vh, 1vh) * 100);
   padding: env(safe-area-inset-top, 16px) 16px calc(env(safe-area-inset-bottom, 16px) + 16px);
   display: flex;
   flex-direction: column;
