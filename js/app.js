@@ -29,6 +29,28 @@ if ('serviceWorker' in navigator) {
 
 document.getElementById('app-version').textContent = APP_VERSION;
 
+// On a cold launch from the iOS home-screen icon, the first paint can use a
+// stale/too-tall viewport height (the standalone status bar / safe area
+// hasn't finished settling yet), which pushes the bottom bar below the
+// fold until something forces a reflow - which is why closing and
+// reopening the app "fixes" it. Measure the real height ourselves and
+// re-measure whenever it's likely to have changed, so the very first
+// render already uses the right value instead of waiting for the user to
+// trigger a resize by relaunching.
+function setViewportHeight() {
+  document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
+}
+setViewportHeight();
+window.addEventListener('resize', setViewportHeight);
+window.addEventListener('orientationchange', setViewportHeight);
+window.addEventListener('pageshow', setViewportHeight);
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') setViewportHeight();
+});
+// Some iOS versions only report the settled height a beat after load, so
+// double-check shortly after the first paint too.
+window.addEventListener('load', () => setTimeout(setViewportHeight, 300));
+
 const views = document.querySelectorAll('.view');
 let currentSession = null; // in-memory working session during filming
 let currentCardIndex = 0;

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'e2a-prompter-v18';
+const CACHE_NAME = 'e2a-prompter-v19';
 const APP_SHELL = [
   './',
   './index.html',
